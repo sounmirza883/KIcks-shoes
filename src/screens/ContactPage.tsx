@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import {
   Mail,
@@ -11,12 +13,10 @@ import {
   MessageSquare,
   ShieldCheck,
 } from 'lucide-react';
+import { useStore } from '../components/StoreProvider.tsx';
 
-interface ContactPageProps {
-  onShowToast: (message: string) => void;
-}
-
-export const ContactPage: React.FC<ContactPageProps> = ({ onShowToast }) => {
+export const ContactPage: React.FC = () => {
+  const { showToast: onShowToast } = useStore();
   const [formData, setFormData] = useState({
     name: '',
     email: '',

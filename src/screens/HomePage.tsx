@@ -1,5 +1,9 @@
+'use client';
+
 import React from 'react';
-import { Sneaker, CollectionCategory } from '../types/index.ts';
+import { Sneaker } from '../types/index.ts';
+import { SNEAKERS, CATEGORIES } from '../data/products.ts';
+import { useStore } from '../components/StoreProvider.tsx';
 import { Hero } from '../components/Hero.tsx';
 import { HigherStandardBanner } from '../components/HigherStandardBanner.tsx';
 import { WhyChooseUs } from '../components/WhyChooseUs.tsx';
@@ -12,31 +16,19 @@ import { NewArrivals } from '../components/NewArrivals.tsx';
 import { ExclusiveDrops } from '../components/ExclusiveDrops.tsx';
 import { DiscountNewsletter } from '../components/DiscountNewsletter.tsx';
 
-interface HomePageProps {
-  sneakers: Sneaker[];
-  categories: CollectionCategory[];
-  wishlistIds: string[];
-  onToggleWishlist: (sneaker: Sneaker) => void;
-  onAddToCart: (sneaker: Sneaker) => void;
-  onSelectSneaker: (sneaker: Sneaker) => void;
-  onNavigateToShop: (filter?: { category?: string; collectionType?: string }) => void;
-  onNavigateToCollection: (collectionId: string) => void;
-  onNavigateToAbout: () => void;
-  onPromoReceived: (code: string) => void;
-}
+export const HomePage: React.FC = () => {
+  const { wishlistIds, toggleWishlist, addToCart, selectSneaker, navigate, receivePromo } = useStore();
+  const sneakers = SNEAKERS;
+  const categories = CATEGORIES;
+  const onToggleWishlist = toggleWishlist;
+  const onAddToCart = (sneaker: Sneaker) => addToCart(sneaker);
+  const onSelectSneaker = selectSneaker;
+  const onNavigateToShop = (filter?: { category?: string; collectionType?: string }) =>
+    navigate('shop', filter);
+  const onNavigateToCollection = (collectionId: string) => navigate('collections', { collectionId });
+  const onNavigateToAbout = () => navigate('about');
+  const onPromoReceived = receivePromo;
 
-export const HomePage: React.FC<HomePageProps> = ({
-  sneakers,
-  categories,
-  wishlistIds,
-  onToggleWishlist,
-  onAddToCart,
-  onSelectSneaker,
-  onNavigateToShop,
-  onNavigateToCollection,
-  onNavigateToAbout,
-  onPromoReceived,
-}) => {
   return (
     <div>
       {/* 1. Hero: "BUILT FOR WHAT'S NEXT" */}

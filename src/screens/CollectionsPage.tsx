@@ -1,18 +1,15 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+
+import React from 'react';
 import { ArrowRight, ChevronLeft, Sparkles, Filter, Check } from 'lucide-react';
-import { Sneaker, CollectionCategory } from '../types/index.ts';
+import { Sneaker } from '../types/index.ts';
+import { SNEAKERS, CATEGORIES } from '../data/products.ts';
+import { useStore } from '../components/StoreProvider.tsx';
 import { ProductCard } from '../components/ProductCard.tsx';
 import { SneakerVisual } from '../components/SneakerVisual.tsx';
 
 interface CollectionsPageProps {
-  categories: CollectionCategory[];
-  sneakers: Sneaker[];
-  wishlistIds: string[];
-  onToggleWishlist: (sneaker: Sneaker) => void;
-  onAddToCart: (sneaker: Sneaker) => void;
-  onSelectSneaker: (sneaker: Sneaker) => void;
-  selectedCollectionId?: string; // 'all' | 'lifestyle' | 'running' | 'basketball' | 'casual'
-  onSelectCollectionId: (id: string) => void;
+  selectedCollectionId?: string; // 'all' | 'lifestyle' | 'running' | 'basketball' | 'casual', from the route
 }
 
 interface CollectionDetailMeta {
@@ -63,25 +60,17 @@ const COLLECTION_METAS: Record<string, CollectionDetailMeta> = {
   },
 };
 
-export const CollectionsPage: React.FC<CollectionsPageProps> = ({
-  categories,
-  sneakers,
-  wishlistIds,
-  onToggleWishlist,
-  onAddToCart,
-  onSelectSneaker,
-  selectedCollectionId = 'all',
-  onSelectCollectionId,
-}) => {
-  const [activeCollection, setActiveCollection] = useState<string>(
-    selectedCollectionId || 'all'
-  );
+export const CollectionsPage: React.FC<CollectionsPageProps> = ({ selectedCollectionId = 'all' }) => {
+  const { wishlistIds, toggleWishlist, addToCart, selectSneaker, navigate } = useStore();
+  const sneakers = SNEAKERS;
+  const categories = CATEGORIES;
+  const onToggleWishlist = toggleWishlist;
+  const onAddToCart = (sneaker: Sneaker) => addToCart(sneaker);
+  const onSelectSneaker = selectSneaker;
+  const onSelectCollectionId = (collectionId: string) => navigate('collections', { collectionId });
 
-  useEffect(() => {
-    if (selectedCollectionId) {
-      setActiveCollection(selectedCollectionId);
-    }
-  }, [selectedCollectionId]);
+  // The route is the source of truth, so there is no local copy that could go stale.
+  const activeCollection = selectedCollectionId;
 
   const currentMeta = COLLECTION_METAS[activeCollection];
 
@@ -103,7 +92,6 @@ export const CollectionsPage: React.FC<CollectionsPageProps> = ({
           <div className="flex items-center gap-2 py-3 overflow-x-auto no-scrollbar">
             <button
               onClick={() => {
-                setActiveCollection('all');
                 onSelectCollectionId('all');
               }}
               className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
@@ -119,7 +107,6 @@ export const CollectionsPage: React.FC<CollectionsPageProps> = ({
               <button
                 key={cat.id}
                 onClick={() => {
-                  setActiveCollection(cat.id);
                   onSelectCollectionId(cat.id);
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
@@ -168,7 +155,6 @@ export const CollectionsPage: React.FC<CollectionsPageProps> = ({
                   <div
                     key={cat.id}
                     onClick={() => {
-                      setActiveCollection(cat.id);
                       onSelectCollectionId(cat.id);
                     }}
                     className="group cursor-pointer rounded-3xl overflow-hidden bg-white border border-neutral-200 shadow-md hover:shadow-2xl transition-all duration-300 flex flex-col justify-between"
@@ -246,7 +232,6 @@ export const CollectionsPage: React.FC<CollectionsPageProps> = ({
             {/* Breadcrumb Back Action */}
             <button
               onClick={() => {
-                setActiveCollection('all');
                 onSelectCollectionId('all');
               }}
               className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-600 hover:text-black transition-colors cursor-pointer"

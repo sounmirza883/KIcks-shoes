@@ -2,7 +2,7 @@
 --
 -- SETUP
 --   1. Create a Supabase project. Copy its URL and anon/publishable key into .env.local as
---      VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY. Never put the service_role key in the browser.
+--      NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY. Never put the service_role key in the browser.
 --   2. Paste this whole file into Dashboard > SQL Editor and run it.
 --   3. Auth > URL Configuration: set Site URL to http://localhost:3000 and add it to Redirect URLs.
 --   4. Auth > Providers > Email: keep "Confirm email" on for production (turn it off for local testing if you

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Instagram, Youtube, Twitter, Disc as BrandTiktok, ArrowUp } from 'lucide-react';
-import { PageView } from './Header.tsx';
+import { PageView } from '../utils/routes.ts';
 
 interface FooterProps {
   onNavigatePage: (page: PageView, filter?: any) => void;

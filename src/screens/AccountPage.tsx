@@ -1,16 +1,15 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
-import type { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase.ts';
+import { useStore } from '../components/StoreProvider.tsx';
 import { Order } from '../types/index.ts';
 import { formatPrice } from '../utils/cart.ts';
 
-interface AccountPageProps {
-  user: User | null | undefined; // undefined = session still loading
-  onSignIn: () => void;
-  onNavigateToShop: () => void;
-}
-
-export const AccountPage: React.FC<AccountPageProps> = ({ user, onSignIn, onNavigateToShop }) => {
+export const AccountPage: React.FC = () => {
+  const { user, openAuth, navigate } = useStore(); // user: undefined = session still loading
+  const onSignIn = () => openAuth('signin');
+  const onNavigateToShop = () => navigate('shop');
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [error, setError] = useState('');
   const userId = user?.id;

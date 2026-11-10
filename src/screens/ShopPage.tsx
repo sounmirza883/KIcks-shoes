@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Search,
   Filter,
@@ -11,35 +14,33 @@ import {
   ArrowUpDown,
 } from 'lucide-react';
 import { Sneaker } from '../types/index.ts';
+import { SNEAKERS } from '../data/products.ts';
+import { useStore } from '../components/StoreProvider.tsx';
 import { ProductCard } from '../components/ProductCard.tsx';
 import {
   StoreFilterState,
   INITIAL_STORE_FILTERS,
   filterAndSortSneakers,
 } from '../utils/store.ts';
-
-interface ShopPageProps {
-  sneakers: Sneaker[];
-  wishlistIds: string[];
-  onToggleWishlist: (sneaker: Sneaker) => void;
-  onAddToCart: (sneaker: Sneaker) => void;
-  onSelectSneaker: (sneaker: Sneaker) => void;
-  initialCategory?: string;
-  initialCollectionType?: string;
-}
+import { parseShopFilters } from '../utils/routes.ts';
 
 const STORAGE_KEY = 'kicks_store_filters';
 
-export const ShopPage: React.FC<ShopPageProps> = ({
-  sneakers,
-  wishlistIds,
-  onToggleWishlist,
-  onAddToCart,
-  onSelectSneaker,
-  initialCategory,
-  initialCollectionType,
-}) => {
+export const ShopPage: React.FC = () => {
+  const { wishlistIds, toggleWishlist, addToCart, selectSneaker } = useStore();
+  const sneakers = SNEAKERS;
+  const onToggleWishlist = toggleWishlist;
+  const onAddToCart = (sneaker: Sneaker) => addToCart(sneaker);
+  const onSelectSneaker = selectSneaker;
+
+  // Filters pre-selected by a link (e.g. /shop?collectionType=new-in); invalid values are dropped.
+  const { category: initialCategory, collectionType: initialCollectionType } = parseShopFilters(
+    useSearchParams()
+  );
+
   // Load saved store preferences or defaults
+  // shortcut: relies on the useSearchParams client-render bailout (see app/shop/page.tsx) so localStorage is never
+  // read on the server; if that hook goes, move this load into an effect.
   const [filters, setFilters] = useState<StoreFilterState>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);

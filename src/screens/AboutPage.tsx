@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import {
   ShieldCheck,
@@ -11,16 +13,13 @@ import {
   Flame,
   Search,
 } from 'lucide-react';
+import { useStore } from '../components/StoreProvider.tsx';
 
-interface AboutPageProps {
-  onNavigateToShop: () => void;
-  onNavigateToContact: () => void;
-}
+export const AboutPage: React.FC = () => {
+  const { navigate } = useStore();
+  const onNavigateToShop = () => navigate('shop');
+  const onNavigateToContact = () => navigate('contact');
 
-export const AboutPage: React.FC<AboutPageProps> = ({
-  onNavigateToShop,
-  onNavigateToContact,
-}) => {
   const authenticationSteps = [
     {
       step: '01',

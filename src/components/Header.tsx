@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Heart, ShoppingBag, User, X, ArrowRight, Menu } from 'lucide-react';
 import { Sneaker } from '../types/index.ts';
-
-export type PageView = 'home' | 'shop' | 'collections' | 'about' | 'contact' | 'account';
+import { PageView } from '../utils/routes.ts';
 
 interface HeaderProps {
   cartCount: number;
