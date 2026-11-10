@@ -17,6 +17,8 @@ export interface CartCalculationResult {
 export const FREE_SHIPPING_THRESHOLD = 150;
 export const STANDARD_SHIPPING_FEE = 15;
 export const TAX_RATE = 0.08;
+// Per cart line. place_order (supabase/schema.sql) rejects lines above this.
+export const MAX_LINE_QUANTITY = 10;
 
 export function calculateCartTotals(
   items: CartItem[],

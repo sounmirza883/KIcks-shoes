@@ -12,6 +12,10 @@ import { CartDrawer } from './components/CartDrawer.tsx';
 import { WishlistDrawer } from './components/WishlistDrawer.tsx';
 import { ProductDetailModal } from './components/ProductDetailModal.tsx';
 import { CheckoutModal } from './components/CheckoutModal.tsx';
+import { AuthModal, AuthMode } from './components/AuthModal.tsx';
+import { supabase, openedFromRecoveryLink } from './lib/supabase.ts';
+import { validatePromoCode, MAX_LINE_QUANTITY } from './utils/cart.ts';
+import type { User } from '@supabase/supabase-js';
 
 // Dedicated Pages
 import { HomePage } from './pages/HomePage.tsx';
@@ -19,6 +23,7 @@ import { ShopPage } from './pages/ShopPage.tsx';
 import { CollectionsPage } from './pages/CollectionsPage.tsx';
 import { AboutPage } from './pages/AboutPage.tsx';
 import { ContactPage } from './pages/ContactPage.tsx';
+import { AccountPage } from './pages/AccountPage.tsx';
 
 export default function App() {
   const [sneakers] = useState<Sneaker[]>(SNEAKERS);
@@ -55,6 +60,10 @@ export default function App() {
   const [appliedPromo, setAppliedPromo] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Supabase auth: undefined = session still loading, null = signed out. authMode null = modal closed.
+  const [user, setUser] = useState<User | null | undefined>(undefined);
+  const [authMode, setAuthMode] = useState<AuthMode | null>(null);
+
   // Trigger floating toast message
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -76,6 +85,8 @@ export default function App() {
         setCurrentPage('shop');
       } else if (hash === 'about') {
         setCurrentPage('about');
+      } else if (hash === 'account') {
+        setCurrentPage('account');
       } else if (hash === 'contact') {
         setCurrentPage('contact');
       } else {
@@ -87,6 +98,40 @@ export default function App() {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
+  // Auth session. onAuthStateChange also fires INITIAL_SESSION for a stored session.
+  useEffect(() => {
+    if (!supabase) {
+      setUser(null);
+      return;
+    }
+    if (openedFromRecoveryLink) setAuthMode('recovery');
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (event === 'PASSWORD_RECOVERY') setAuthMode('recovery');
+      // Don't leave one person's wishlist on screen for the next person on this device.
+      if (event === 'SIGNED_OUT') setWishlistIds([]);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Load the signed-in user's wishlist. Kept out of the callback above: awaiting supabase calls inside it can deadlock.
+  const userId = user?.id;
+  useEffect(() => {
+    if (!supabase || !userId) return;
+    let cancelled = false;
+    supabase
+      .from('wishlist_items')
+      .select('sneaker_id')
+      .then(({ data }) => {
+        if (!cancelled && data) setWishlistIds(data.map((row) => row.sneaker_id));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   // Page Navigation Handler
   const navigateToPage = (
@@ -130,7 +175,7 @@ export default function App() {
         const next = [...prev];
         next[existingIndex] = {
           ...next[existingIndex],
-          quantity: next[existingIndex].quantity + 1,
+          quantity: Math.min(MAX_LINE_QUANTITY, next[existingIndex].quantity + 1),
         };
         return next;
       }
@@ -156,7 +201,7 @@ export default function App() {
     }
     setCartItems((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], quantity: newQty };
+      next[index] = { ...next[index], quantity: Math.min(MAX_LINE_QUANTITY, newQty) };
       return next;
     });
   };
@@ -168,19 +213,34 @@ export default function App() {
 
   // Wishlist operations
   const handleToggleWishlist = (sneaker: Sneaker) => {
-    setWishlistIds((prev) => {
-      if (prev.includes(sneaker.id)) {
-        showToast(`Removed from wishlist`);
-        return prev.filter((id) => id !== sneaker.id);
-      } else {
-        showToast(`Saved to wishlist`);
-        return [...prev, sneaker.id];
+    const adding = !wishlistIds.includes(sneaker.id);
+    const setSaved = (saved: boolean) =>
+      setWishlistIds((prev) =>
+        saved
+          ? prev.includes(sneaker.id) ? prev : [...prev, sneaker.id]
+          : prev.filter((id) => id !== sneaker.id)
+      );
+
+    setSaved(adding);
+    showToast(adding ? 'Saved to wishlist' : 'Removed from wishlist');
+
+    // Signed-out hearts stay session-only. Signed-in: optimistic update, rolled back if the save fails.
+    if (!supabase || !user) return;
+    const request = adding
+      ? supabase.from('wishlist_items').insert({ sneaker_id: sneaker.id })
+      : supabase.from('wishlist_items').delete().eq('sneaker_id', sneaker.id);
+    request.then(({ error }) => {
+      // 23505 = already saved (e.g. a double click): the end state is what the user wanted.
+      if (error && error.code !== '23505') {
+        setSaved(!adding);
+        showToast('Could not update your wishlist');
       }
     });
   };
 
   const wishlistSneakers = sneakers.filter((s) => wishlistIds.includes(s.id));
   const totalCartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const promo = validatePromoCode(appliedPromo);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F9FA] text-neutral-900 selection:bg-neutral-900 selection:text-white">
@@ -203,6 +263,8 @@ export default function App() {
         sneakers={sneakers}
         currentPage={currentPage}
         onNavigatePage={(p) => navigateToPage(p)}
+        isSignedIn={!!user}
+        onOpenAccount={() => (user ? navigateToPage('account') : setAuthMode('signin'))}
       />
 
       {/* Page Content View Router */}
@@ -262,6 +324,14 @@ export default function App() {
           />
         )}
 
+        {currentPage === 'account' && (
+          <AccountPage
+            user={user}
+            onSignIn={() => setAuthMode('signin')}
+            onNavigateToShop={() => navigateToPage('shop')}
+          />
+        )}
+
         {currentPage === 'contact' && (
           <ContactPage onShowToast={showToast} />
         )}
@@ -279,7 +349,12 @@ export default function App() {
         onRemoveItem={handleRemoveFromCart}
         onCheckout={() => {
           setIsCartOpen(false);
-          setIsCheckoutOpen(true);
+          if (user) {
+            setIsCheckoutOpen(true);
+          } else {
+            setAuthMode('signin');
+            showToast('Sign in to check out');
+          }
         }}
         appliedPromo={appliedPromo}
         onApplyPromo={(code) => {
@@ -312,11 +387,20 @@ export default function App() {
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         items={cartItems}
-        discountPercent={appliedPromo ? 10 : 0}
+        discountPercent={promo.discountPercent}
+        appliedPromo={promo.valid ? appliedPromo : ''}
+        userEmail={user?.email ?? ''}
         onOrderComplete={() => {
           setCartItems([]);
           showToast('Order confirmed! Check receipt details.');
         }}
+      />
+
+      <AuthModal
+        mode={authMode}
+        onModeChange={setAuthMode}
+        onClose={() => setAuthMode(null)}
+        onToast={showToast}
       />
 
     </div>

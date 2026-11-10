@@ -14,19 +14,19 @@ interface SneakerVisualProps {
 
 // High-resolution real product photography for sneakers
 const SILHOUETTE_IMAGE_MAP: Record<Sneaker['silhouette'], string> = {
-  jordan4: '/src/assets/images/jordan_retro_shoe_1794331422136.jpg',
-  jordan1: '/src/assets/images/jordan_retro_shoe_1794331422136.jpg',
-  dunk: '/src/assets/images/lifestyle_dunk_shoe_1794331421061.jpg',
-  af1: '/src/assets/images/lifestyle_dunk_shoe_1794331421061.jpg',
-  converse: '/src/assets/images/lifestyle_dunk_shoe_1794331421061.jpg',
-  nb9060: '/src/assets/images/runner_tech_shoe_1794331421205.jpg',
-  nb530: '/src/assets/images/runner_tech_shoe_1794331421205.jpg',
-  vomero: '/src/assets/images/runner_tech_shoe_1794331421205.jpg',
-  kayano: '/src/assets/images/runner_tech_shoe_1794331421205.jpg',
-  salomon: '/src/assets/images/runner_tech_shoe_1794331421205.jpg',
-  samba: '/src/assets/images/casual_samba_shoe_1794331423705.jpg',
-  campus: '/src/assets/images/casual_samba_shoe_1794331423705.jpg',
-  custom: '/src/assets/images/stealth_drop_shoe_1794331423317.jpg',
+  jordan4: '/images/jordan_retro_shoe_1794331422136.jpg',
+  jordan1: '/images/jordan_retro_shoe_1794331422136.jpg',
+  dunk: '/images/lifestyle_dunk_shoe_1794331421061.jpg',
+  af1: '/images/lifestyle_dunk_shoe_1794331421061.jpg',
+  converse: '/images/lifestyle_dunk_shoe_1794331421061.jpg',
+  nb9060: '/images/runner_tech_shoe_1794331421205.jpg',
+  nb530: '/images/runner_tech_shoe_1794331421205.jpg',
+  vomero: '/images/runner_tech_shoe_1794331421205.jpg',
+  kayano: '/images/runner_tech_shoe_1794331421205.jpg',
+  salomon: '/images/runner_tech_shoe_1794331421205.jpg',
+  samba: '/images/casual_samba_shoe_1794331423705.jpg',
+  campus: '/images/casual_samba_shoe_1794331423705.jpg',
+  custom: '/images/stealth_drop_shoe_1794331423317.jpg',
 };
 
 export const SneakerVisual: React.FC<SneakerVisualProps> = ({

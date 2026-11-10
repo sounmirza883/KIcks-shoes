@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, Heart, ShoppingBag, User, X, ArrowRight, Menu } from 'lucide-react';
 import { Sneaker } from '../types/index.ts';
 
-export type PageView = 'home' | 'shop' | 'collections' | 'about' | 'contact';
+export type PageView = 'home' | 'shop' | 'collections' | 'about' | 'contact' | 'account';
 
 interface HeaderProps {
   cartCount: number;
@@ -13,6 +13,8 @@ interface HeaderProps {
   sneakers: Sneaker[];
   currentPage: PageView;
   onNavigatePage: (page: PageView) => void;
+  isSignedIn: boolean;
+  onOpenAccount: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -24,6 +26,8 @@ export const Header: React.FC<HeaderProps> = ({
   sneakers,
   currentPage,
   onNavigatePage,
+  isSignedIn,
+  onOpenAccount,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -178,12 +182,12 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Right Header Actions: User, Wishlist, Cart */}
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-            {/* User Icon -> Navigates to About or Contact */}
+            {/* User Icon -> Account page when signed in, sign-in modal otherwise */}
             <button
-              onClick={() => onNavigatePage('about')}
+              onClick={onOpenAccount}
               className="p-2 text-neutral-700 hover:text-black hover:bg-neutral-100 rounded-full transition-colors cursor-pointer"
-              aria-label="About Kicks"
-              title="About Kicks"
+              aria-label={isSignedIn ? 'My account' : 'Sign in'}
+              title={isSignedIn ? 'My account' : 'Sign in'}
             >
               <User className="w-5 h-5" />
             </button>

@@ -1,45 +1,83 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, CheckCircle2, ShieldCheck, CreditCard, Banknote, Truck } from 'lucide-react';
 import { CartItem } from '../types/index.ts';
 import { calculateCartTotals, formatPrice } from '../utils/cart.ts';
+import { supabase } from '../lib/supabase.ts';
+import { buildOrderPayload, newRequestId, orderErrorMessage, CheckoutForm } from '../utils/orders.ts';
 
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   items: CartItem[];
   discountPercent: number;
+  appliedPromo: string; // valid promo code or '' (the server re-validates it)
+  userEmail: string;
   onOrderComplete: () => void;
 }
+
+const EMPTY_FORM: CheckoutForm = {
+  name: '',
+  email: '',
+  address: '',
+  city: '',
+  state: '',
+  zip: '',
+  paymentMethod: 'card',
+};
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   isOpen,
   onClose,
   items,
   discountPercent,
+  appliedPromo,
+  userEmail,
   onOrderComplete,
 }) => {
   const [step, setStep] = useState<'details' | 'success'>('details');
-  const [formData, setFormData] = useState({
-    name: 'Muhammad Ali',
-    email: 'muhammadalihassanafzalmirza883@gmail.com',
-    address: '742 Evergreen Terrace',
-    city: 'Los Angeles',
-    state: 'CA',
-    zip: '90001',
-    paymentMethod: 'card',
-  });
+  const [formData, setFormData] = useState<CheckoutForm>(EMPTY_FORM);
   const [orderNumber, setOrderNumber] = useState('');
   const [paidTotal, setPaidTotal] = useState<number>(0);
+  const [requestId, setRequestId] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  // This modal stays mounted while closed, so every open starts from a clean form and a fresh
+  // idempotency key (a retry of the same submit reuses the key; a new checkout gets a new one).
+  useEffect(() => {
+    if (!isOpen) return;
+    setStep('details');
+    setFormData({ ...EMPTY_FORM, email: userEmail });
+    setRequestId(newRequestId());
+    setSubmitting(false);
+    setError('');
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const totals = calculateCartTotals(items, discountPercent);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const generatedOrderNumber = `KICKS-${Math.floor(100000 + Math.random() * 900000)}`;
-    setOrderNumber(generatedOrderNumber);
-    setPaidTotal(totals.total);
+    if (submitting) return;
+    if (!supabase) {
+      setError('Checkout is unavailable: Supabase is not configured.');
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    // The server prices the order; the success screen shows what it actually charged.
+    const { data, error: rpcError } = await supabase.rpc(
+      'place_order',
+      buildOrderPayload(items, formData, appliedPromo, requestId)
+    );
+    setSubmitting(false);
+    if (rpcError) {
+      setError(orderErrorMessage(rpcError.message));
+      return;
+    }
+    setOrderNumber(data.order_number);
+    setPaidTotal(Number(data.total));
     setStep('success');
     onOrderComplete();
   };
@@ -223,11 +261,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </div>
                 </div>
 
+                {error && (
+                  <p role="alert" className="text-xs font-semibold text-red-600">
+                    {error}
+                  </p>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full bg-[#111111] hover:bg-black text-white py-4 rounded-xl font-bold text-sm tracking-wider uppercase transition-all shadow-lg mt-4 cursor-pointer"
+                  disabled={submitting}
+                  className="w-full bg-[#111111] hover:bg-black disabled:opacity-60 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-sm tracking-wider uppercase transition-all shadow-lg mt-4 cursor-pointer"
                 >
-                  Confirm & Place Order ({formatPrice(totals.total)})
+                  {submitting ? 'Placing order…' : `Confirm & Place Order (${formatPrice(totals.total)})`}
                 </button>
               </form>
             </div>

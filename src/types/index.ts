@@ -40,6 +40,22 @@ export interface CartItem {
   quantity: number;
 }
 
+// Shape returned by the Account page query on public.orders (with embedded order_items).
+export interface OrderItem {
+  name: string;
+  size: number;
+  quantity: number;
+  unit_price: number;
+}
+
+export interface Order {
+  order_number: string;
+  created_at: string;
+  total: number;
+  status: string;
+  order_items: OrderItem[];
+}
+
 export interface CollectionCategory {
   id: string;
   name: string;

@@ -60,7 +60,7 @@ export const ExclusiveDrops: React.FC<ExclusiveDropsProps> = ({
               <div className="absolute inset-0 bg-neutral-900/60 rounded-3xl -z-10 blur-xl transform group-hover:scale-105 transition-transform" />
               <SneakerVisual
                 silhouette={dropSneaker?.silhouette || 'jordan4'}
-                image={dropSneaker?.image || '/src/assets/images/stealth_drop_shoe_1794331423317.jpg'}
+                image={dropSneaker?.image || '/images/stealth_drop_shoe_1794331423317.jpg'}
                 alt={dropSneaker?.name || 'Exclusive Drop Sneaker'}
                 isDarkBg={true}
                 size="hero"
