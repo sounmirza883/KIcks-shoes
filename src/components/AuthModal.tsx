@@ -40,6 +40,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ mode, onModeChange, onClos
     if (!mode) setEmail('');
   }, [mode]);
 
+  // Escape closes the dialog (only while it is open).
+  useEffect(() => {
+    if (!mode) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [mode, onClose]);
+
   if (!mode) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
