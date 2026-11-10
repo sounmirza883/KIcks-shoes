@@ -2,7 +2,7 @@
 
 > First draft by setup-expert-v1 from the code. Owner: backend-expert-v1 (refines it if a backend is ever added).
 
-**No database: the app stores nothing server-side because it has no server (D-001). Revisit if accounts, saved bags or real orders are added.** What follows is the in-code data model, so agents keep it consistent. Source of truth: `src/types/index.ts` and `src/data/products.ts`.
+**Two stores.** The catalogue, categories, hero slides, cart and reviews are in-code data (below). Accounts, orders and the saved wishlist live in Supabase (D-012, which supersedes D-001): Auth plus the tables in [Supabase tables](#supabase-tables), defined in `supabase/schema.sql`. Source of truth for the in-code model: `src/types/index.ts` and `src/data/products.ts`.
 
 ## Tables
 
@@ -31,6 +31,20 @@ Static data (TypeScript constants), not tables:
 
 Browser storage: key `kicks_store_filters` = JSON of `StoreFilterState` (search, category, brand, size, min/max price, sort, collectionType).
 
+## Supabase tables
+
+Defined in `supabase/schema.sql` (idempotent; run it in the SQL editor). Row-level security is on for every table because the anon key is public.
+
+| Table | Written by | Readable by | Notes |
+|---|---|---|---|
+| `products` (id, name, price) | seed only | nobody directly (`place_order` reads it) | server-side price source; the seed must match `SNEAKERS` |
+| `promo_codes` (code, percent) | seed only | nobody directly | the seed must match `validatePromoCode` |
+| `orders` | `place_order` only | the owner (`select`) | unique `(user_id, client_request_id)` for idempotency; numbers are `KICKS-<sequence>`; the shipping address is copied onto the row |
+| `order_items` | `place_order` only | the owner, via the parent order | snapshots `name` and `unit_price` at order time |
+| `wishlist_items` (user_id, sneaker_id) | the owner (`insert`, `delete`) | the owner | primary key `(user_id, sneaker_id)`; `sneaker_id` references `products` |
+
+`place_order(request_id, items, shipping, payment_method, promo)` is `security definer` and callable by signed-in users only. It validates 1 to 50 lines with quantity 1 to 10, prices them from `products`, applies the promo from `promo_codes`, computes shipping (free from $150, else $15), tax (8%) and the total exactly as `calculateCartTotals` does, allows at most 20 orders per user per hour, inserts the order and its lines in one transaction, and returns `{order_number, total}`. A repeat of the same `request_id` returns the original order instead of creating a second one.
+
 ## Relations
 
 ```mermaid
@@ -54,4 +68,4 @@ None. Lookups scan 14 items in memory. If the catalogue grows past a few hundred
 
 ## Migrations and backups
 
-No migrations. A change to `StoreFilterState` must tolerate old saved JSON: merge over `INITIAL_STORE_FILTERS` (already done) and ignore unknown or invalid values (T-022 tests a tampered value). Backups: the git history is the only copy of the data.
+Supabase has no migration tool here: `supabase/schema.sql` is idempotent, so re-run it in the SQL editor after a change (altering a column or constraint on existing data needs a hand-written `alter`). Backups for orders and wishlists are the Supabase project's own (plan-dependent); git holds the schema and the seed. A change to `StoreFilterState` must tolerate old saved JSON: merge over `INITIAL_STORE_FILTERS` (already done) and ignore unknown or invalid values (T-022 tests a tampered value). Static catalogue data: the git history is the only copy.

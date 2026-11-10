@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Claude Code only
 - Skills are in `~/.claude/skills/` (global; none in the project yet). Invoke them by name, e.g. `/premium-ui-expert-v1`, `/tester-expert-v1`.
+- Never use a git worktree: don't call `EnterWorktree`, don't start agents or sessions with worktree isolation, and don't run `git worktree add`. For isolated changes, use a normal git branch in this checkout (`git switch -c <name>`) instead.
 - Use the task list for multi-step work, and tick docs/TASKS.md when a task is done.
 - Bug ids (B-xx) are in docs/TESTING.md → Results; several gotchas below are tracked there with a fixing task.
 
