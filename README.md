@@ -1,10 +1,10 @@
 # KICKS.
 
-A sneaker storefront ("Built For What's Next"): browse 14 sneakers, search and filter, sign in, save a wishlist, fill a bag, apply a promo code and place an order that is saved to your account. React 19 + Vite + Tailwind v4 on the front end; Supabase (Postgres + Auth) for accounts, the saved wishlist and orders; deployable to Vercel. Payment is **simulated**: no card details are collected. It started in Google AI Studio and is now developed with Claude Code.
+A sneaker storefront ("Built For What's Next"): browse 14 sneakers, search and filter, sign in, save a wishlist, fill a bag, apply a promo code and place an order that is saved to your account. Next.js 16 (App Router) + React 19 + Tailwind v4 on the front end; Supabase (Postgres + Auth) for accounts, the saved wishlist and orders; deployable to Vercel. Payment is **simulated**: no card details are collected. It started in Google AI Studio and is now developed with Claude Code.
 
 ## Requirements
 
-- Node.js `^20.19.0 || >=22.12.0` (Vite 8 requirement; developed on Node 24.12, npm 11)
+- Node.js `>=20.19.0` (developed on Node 24.12, npm 11)
 - npm
 
 ## Install
@@ -15,12 +15,12 @@ npm install
 
 ## Environment variables
 
-Copy `.env.example` to `.env.local` (git-ignored). `GEMINI_API_KEY` and `APP_URL` in that file are leftover AI Studio scaffolding that no code reads (D-009). Never put a secret in a `VITE_` variable: it ends up in the public bundle. The Supabase anon key is public by design and is safe only because row-level security is on.
+Copy `.env.example` to `.env.local` (git-ignored). If you already have a `.env.local` from the Vite version, rename its two `VITE_SUPABASE_*` keys to the `NEXT_PUBLIC_SUPABASE_*` names below. Never put a secret in a `NEXT_PUBLIC_` variable: it ends up in the public bundle. The Supabase anon key is public by design and is safe only because row-level security is on.
 
 | Name | Required | Example | What it is |
 |---|---|---|---|
-| `VITE_SUPABASE_URL` | for sign-in, wishlist and checkout | `https://abcd1234.supabase.co` | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | for sign-in, wishlist and checkout | `eyJ...` or `sb_publishable_...` | Public anon / publishable key (never the `service_role` key) |
+| `NEXT_PUBLIC_SUPABASE_URL` | for sign-in, wishlist and checkout | `https://abcd1234.supabase.co` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | for sign-in, wishlist and checkout | `eyJ...` or `sb_publishable_...` | Public anon / publishable key (never the `service_role` key) |
 
 Without them the store still browses; sign-in, checkout and the account page say Supabase is not configured.
 
@@ -28,11 +28,11 @@ Without them the store still browses; sign-in, checkout and the account page say
 
 ```bash
 npm run dev       # http://localhost:3000 (may take a few seconds to start)
-npm run build     # production build into dist/
-npm run preview   # serve dist/ locally
+npm run build     # production build into .next/
+npm start         # serve the production build locally
 ```
 
-Routes use the URL hash: `#shop`, `#collections`, `#collections/running`, `#about`, `#contact`, `#account`.
+Routes are real paths: `/shop`, `/collections`, `/collections/running`, `/about`, `/contact`, `/account`. Shop filters go in the query string, for example `/shop?collectionType=new-in`.
 
 ## Database and accounts (Supabase)
 
@@ -44,8 +44,8 @@ If you change a price, promo code or cart rule in `src/`, change `supabase/schem
 
 ## Deploy to Vercel
 
-1. Push the repo to GitHub and import it in Vercel. The Vite preset is detected automatically (build `npm run build`, output `dist`). `vercel.json` only adds security headers; hash routing needs no rewrites.
-2. Project Settings → Environment Variables: add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` for Production and Preview, then deploy. Vite inlines them at build time, so changing them needs a redeploy.
+1. Push the repo to GitHub and import it in Vercel. Vercel detects Next.js automatically. If the project was first created from the old Vite version, set Settings → Framework Preset to Next.js and clear any Output Directory override of `dist`. `vercel.json` only adds security headers.
+2. Project Settings → Environment Variables: add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` for Production and Preview (remove the old `VITE_*` ones), then deploy. Next.js inlines them at build time, so changing them needs a redeploy.
 3. In Supabase Auth → URL Configuration set Site URL to your production URL and add it, plus a wildcard for preview URLs (for example `https://*-your-team.vercel.app/**`), to Redirect URLs. Otherwise email-confirmation and password-reset links won't return to the site.
 4. Commit `package-lock.json` so installs are reproducible.
 
@@ -53,7 +53,7 @@ If you change a price, promo code or cart rule in `src/`, change `supabase/schem
 
 ```bash
 npm run lint                           # tsc --noEmit (the only static check)
-npx tsx --test src/utils/*.test.ts     # 18 unit tests (npm test after T-002)
+npx tsx --test src/utils/*.test.ts     # 23 unit tests (npm test after T-002)
 ```
 
 Today there are no component or browser tests.

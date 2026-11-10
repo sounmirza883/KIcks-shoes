@@ -1,6 +1,6 @@
 # AGENTS.md — KICKS.
 
-A sneaker storefront (React 19 + Vite + Tailwind v4, TypeScript) hosted on Vercel, with Supabase for accounts, the saved wishlist and orders (D-012, D-013): browse, filter, bag, wishlist, sign-in and a checkout that saves the order. No real payments: card details are never collected (see docs/PRD.md).
+A sneaker storefront (Next.js 16 App Router + React 19 + Tailwind v4, TypeScript) hosted on Vercel, with Supabase for accounts, the saved wishlist and orders (D-012, D-013): browse, filter, bag, wishlist, sign-in and a checkout that saves the order. No real payments: card details are never collected (see docs/PRD.md).
 
 ## Read first (every session, in this order)
 1. docs/CONTEXT.md — what we are building and the current status
@@ -35,22 +35,22 @@ Installed **globally** on this machine: `~/.claude/skills/` (Claude Code) and `~
 7. Record any real choice in docs/DECISIONS.md. Unknown facts → an Open question in docs/PRD.md, not a guess.
 
 ## Commands
-- Install: `npm install` (copy `.env.example` to `.env.local` and set the two `VITE_SUPABASE_*` values to use accounts and orders)
+- Install: `npm install` (copy `.env.example` to `.env.local` and set the two `NEXT_PUBLIC_SUPABASE_*` values to use accounts and orders)
 - Run: `npm run dev` (http://localhost:3000; can take a few seconds to start)
 - Test: `npx tsx --test src/utils/*.test.ts` (`npm test` after T-002); single test: `npx tsx --test --test-name-pattern="promo code" src/utils/cart.test.ts`
 - Lint: `npm run lint` (`tsc --noEmit`; there is no ESLint or Prettier)
-- Build: `npm run build`, then `npm run preview`
+- Build: `npm run build`, then `npm start` (serves `.next/`; there is no `preview` script)
 
 ## Project facts that bite
-- Routing is hand-rolled over `location.hash`; all shared state is in `src/App.tsx` (D-003, D-004). Do not add a router or state library.
+- Routing is the Next.js App Router in `src/app/` (D-014); shared state is in `StoreProvider` (`src/components/StoreProvider.tsx`) and read with `useStore()`. Screens live in `src/screens/`, never `src/pages/` (Next reads that as the Pages Router). Do not add another router or a state library.
 - Money maths lives only in `src/utils/cart.ts` (D-010). Imports use explicit `.ts`/`.tsx` extensions; `@` is the repo root.
 - Overlays (`CartDrawer`, `WishlistDrawer`, `ProductDetailModal`, `CheckoutModal`, `AuthModal`) stay mounted: reset their state when they open.
 - Clients never write orders directly: only the `place_order` RPC does, and it prices from the server's `products` table. `supabase/schema.sql` duplicates prices, promo percents and cart constants; `orders.test.ts` fails on drift (D-012).
 - Product images live in `public/images/` as `/images/...` strings; never `/src/assets/...` (it breaks the Vercel build).
-- Leave the `DISABLE_HMR` toggles in `vite.config.ts` alone.
+- `next dev` and `next build` rewrite `tsconfig.json` and set `"strict": false`; keep `"strict": true`.
 
 ## Never
-- Never commit secrets, `.env` or personal data; never put secrets in frontend code or `VITE_` variables (the Supabase anon key is public by design and safe only because RLS is on; the `service_role` key is a secret and is never used here).
+- Never commit secrets, `.env` or personal data; never put secrets in frontend code or `NEXT_PUBLIC_` variables (the Supabase anon key is public by design and safe only because RLS is on; the `service_role` key is a secret and is never used here).
 - Never change TECH_STACK.md choices, add a dependency or reverse a DECISIONS.md entry without the user's OK.
 - Never build out-of-scope features (docs/PRD.md → Out of scope): real payments, guest checkout, SEO. Accounts, the saved wishlist and orders on Supabase are in scope (D-012).
 - Never add card-number fields; never present placeholder reviews, guarantees or customer counts as real.

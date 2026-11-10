@@ -6,9 +6,9 @@ Scope: a static front end with no server, accounts or payments (D-001). The atta
 
 ## Secrets
 
-- There are **no secrets** in the project. `.env.example` holds AI Studio placeholders (`GEMINI_API_KEY`, `APP_URL`) that nothing reads; it is removed in T-008.
+- There are **no secrets** in the project. `.env.example` holds only the two public Supabase values (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`); the Gemini placeholders were removed in the Next.js move (D-014).
 - `.gitignore` already ignores `.env*` except `.env.example`. Keep it that way.
-- Anything in a `VITE_`-prefixed variable ends up in the public bundle. Never put a key, token or password in one, or anywhere in `src/`.
+- Anything in a `NEXT_PUBLIC_`-prefixed variable is inlined into the public bundle at build time. Only the Supabase URL and anon key belong there (public by design, protected by RLS); never put the `service_role` key, another key, token or password in one, or anywhere in `src/`.
 - Do not add the `@google/genai` or any API-key-based client to the browser bundle.
 
 ## Authentication
@@ -48,9 +48,9 @@ Headers are set by the **host**, not the app. Set these at deploy time (T-040), 
 
 | Header | Value (starting point) |
 |---|---|
-| Content-Security-Policy | `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; frame-ancestors 'none'` (`'unsafe-inline'` styles are needed for React `style={{}}`; add `https://images.unsplash.com` to `img-src` only if T-006 is not done) |
+| Content-Security-Policy | `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; frame-ancestors 'none'` (`'unsafe-inline'` styles are needed for React `style={{}}`; `'unsafe-inline'` scripts are needed because Next.js inlines small hydration scripts, and a nonce-based policy needs middleware and dynamic rendering, so it is not planned; test the policy in the browser before shipping; add `https://images.unsplash.com` to `img-src` only if T-006 is not done) |
 | X-Content-Type-Options | `nosniff` |
 | Referrer-Policy | `strict-origin-when-cross-origin` |
 | Strict-Transport-Security | set by the host over HTTPS |
 
-Rate limits: not applicable, there is no API (see [API_SPEC.md](API_SPEC.md#rate-limits)). Dependencies: run `npm audit` before launch and when a dependency changes; the unused `express` and `@google/genai` packages shrink the audit surface once removed (T-008).
+Rate limits: not applicable, there is no API (see [API_SPEC.md](API_SPEC.md#rate-limits)). Dependencies: run `npm audit` before launch and when a dependency changes; the unused `express` and `@google/genai` packages were removed in the Next.js move (D-014), and `npm install` reported 0 vulnerabilities on 2026-11-11.

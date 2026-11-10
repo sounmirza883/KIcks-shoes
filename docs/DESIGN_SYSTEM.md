@@ -46,7 +46,7 @@ Today the UI uses Tailwind classes plus raw hex values (`#111111` ×45, `#FFFFFF
 | Body | Plus Jakarta Sans 300-700 | paragraphs, buttons, inputs |
 | Label | Space Mono 400/700 | small uppercase labels with wide tracking (`tracking-widest`) |
 
-Loaded from Google Fonts in `index.html`; CSS variables `--font-display`, `--font-sans`, `--font-mono` in `index.css`. Fluid sizing with `clamp()` for hero and section headlines (add in T-010); body 16px minimum; labels never below 12px.
+Loaded from Google Fonts by `<link>` tags in `src/app/layout.tsx`; CSS variables `--font-display`, `--font-sans`, `--font-mono` in `src/app/globals.css`. Fluid sizing with `clamp()` for hero and section headlines (add in T-010); body 16px minimum; labels never below 12px.
 
 ## Spacing and shape
 
@@ -67,7 +67,7 @@ Loaded from Google Fonts in `index.html`; CSS variables `--font-display`, `--fon
 
 - Animate only `transform`, `opacity`, `clip-path`. Entrances ease-out, exits ease-in, 12-24px travel, stagger 40-80ms.
 - **Reduced motion:** there is none today (0 matches). Under `prefers-reduced-motion: reduce`, drop movement, keep fades at 200ms or less, show final states.
-- **Bug B-09:** `animate-in`, `fade-in`, `slide-in-from-*`, `zoom-in-*` are no-ops (no animation plugin). Define the keyframes in `index.css` with these tokens (T-012). **Do not add a plugin or a second animation library**; `motion` is already installed if CSS is not enough.
+- **Bug B-09:** `animate-in`, `fade-in`, `slide-in-from-*`, `zoom-in-*` are no-ops (no animation plugin). Define the keyframes in `src/app/globals.css` with these tokens (T-012). **Do not add a plugin or a second animation library**; `motion` is already installed if CSS is not enough.
 - Hero carousel has no autoplay (verified), so no pause control is needed. If autoplay is added, add a pause toggle (`<html data-motion="paused">`).
 - Hover effects only inside `@media (hover: hover) and (pointer: fine)`.
 
@@ -81,7 +81,7 @@ Loaded from Google Fonts in `index.html`; CSS variables `--font-display`, `--fon
 | SneakerVisual | `components/SneakerVisual.tsx` | real image with SVG fallback; meaningful `alt` |
 | Drawer (bag, wishlist) | `CartDrawer`, `WishlistDrawer` | `role="dialog"`, `aria-modal`, focus trap, Esc, focus return |
 | Modal (product, checkout) | `ProductDetailModal`, `CheckoutModal` | same as drawer; reset state on open |
-| Toast | `App.tsx` | `role="status"` / `aria-live="polite"`; 2.6 s |
+| Toast | `StoreProvider.tsx` | `role="status"` / `aria-live="polite"`; 2.6 s |
 | Header, Footer, Hero, section banners | `components/*` | landmarks (`header`, `nav`, `main`, `footer`), heading order |
 
 Icons: `lucide-react` only. No emoji icons, no mixed icon sets.
@@ -90,15 +90,15 @@ Icons: `lucide-react` only. No emoji icons, no mixed icon sets.
 
 | Screen | Route | Job | Animation module | Indexable? |
 |---|---|---|---|---|
-| Home | `#home` (default for empty or unknown hash) | Hook the visitor, route to Shop | 0 reveal, 2 hero reveal, 14 | No (D-002) |
-| Shop | `#shop` (alias `#store`) | Find a pair: search, filters, sort | 0, 14 | No |
-| Collections (all) | `#collections` | Browse by category | 0, 14 | No |
-| Collection | `#collections/<id>` (lifestyle, running, basketball, casual) | Category landing | 0, 14 | No |
-| About | `#about` | Brand story and trust | 0 | No |
-| Contact | `#contact` | Support form, FAQ, stores | 13 click-to-success | No |
+| Home | `/` | Hook the visitor, route to Shop | 0 reveal, 2 hero reveal, 14 | No (D-002) |
+| Shop | `/shop` (presets by query: `?collectionType=`, `?category=`) | Find a pair: search, filters, sort | 0, 14 | No |
+| Collections (all) | `/collections` | Browse by category | 0, 14 | No |
+| Collection | `/collections/<id>` (lifestyle, running, basketball, casual; any other id is a 404) | Category landing | 0, 14 | No |
+| About | `/about` | Brand story and trust | 0 | No |
+| Contact | `/contact` | Support form, FAQ, stores | 13 click-to-success | No |
 | Product detail (modal) | none (state) | Choose colour and size, read reviews, add | 13, 14 | No |
 | Bag (drawer) | none | Review items, promo, shipping progress | 14 | No |
 | Wishlist (drawer) | none | Saved pairs | 14 | No |
 | Checkout (modal) | none | Simulated order | 13 | No |
 
-QA for any UI change: `node <skills-dir>/premium-ui-expert-v1/scripts/ui-audit.mjs src` and the contrast script on `src/index.css` once tokens exist (T-010, T-015).
+QA for any UI change: `node <skills-dir>/premium-ui-expert-v1/scripts/ui-audit.mjs src` and the contrast script on `src/app/globals.css` once tokens exist (T-010, T-015).

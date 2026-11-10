@@ -11,11 +11,11 @@ Risk first (tester-expert-v1): **money** (cart totals, promo, shipping, tax), **
 | What | Command | Status |
 |---|---|---|
 | Static check | `npm run lint` (`tsc --noEmit`) | works |
-| Unit tests | `npx tsx --test src/utils/*.test.ts` | works (18 tests); `npm test` after T-002 |
+| Unit tests | `npx tsx --test src/utils/*.test.ts` | works (23 tests, incl. `routes.test.ts`); `npm test` after T-002 |
 | One test | `npx tsx --test --test-name-pattern="promo code" src/utils/cart.test.ts` | works |
-| Production build | `npm run build`, then `npm run preview` | build works; `dist/images` has the 5 product photos |
+| Production build | `npm run build`, then `npm start` | build works (Next.js 16, 12 routes prerendered); the 5 product photos are served from `public/images` |
 | UI audit | `node <skills-dir>/premium-ui-expert-v1/scripts/ui-audit.mjs src` | T-015 |
-| Contrast | `node <skills-dir>/premium-ui-expert-v1/scripts/contrast-check.mjs src/index.css` | after T-010 |
+| Contrast | `node <skills-dir>/premium-ui-expert-v1/scripts/contrast-check.mjs src/app/globals.css` | after T-010 |
 | Secrets/calls scan | `node <skills-dir>/backend-expert-v1/scripts/security-scan.mjs .` and `call-map.mjs .` | T-009 |
 | E2E | `npx playwright test` | not installed; T-021 (needs OK) |
 
@@ -33,7 +33,7 @@ Ranked by what hurts most if broken. IDs are used by T-021 and T-022.
 | C-4 | **Save:** wishlist toggle from card and modal, move to bag, counts in header | Counts and lists stay in sync; a line is sneaker + size + colour |
 | C-5 | **Contact form:** required fields, ticket id, reset | No data sent anywhere; errors tell the visitor what to fix |
 
-Break-it list for T-022 (from the tester playbook, adapted to a client-only app): double-click add-to-bag and place-order, rapid quantity changes, quantity to 0 and negative, back/refresh/hash change mid-checkout, two tabs, very long text in forms, emoji in names, 320 px and 1920 px viewports, keyboard-only checkout, reduced-motion on.
+Break-it list for T-022 (from the tester playbook, adapted to a client-only app): double-click add-to-bag and place-order, rapid quantity changes, quantity to 0 and negative, back/refresh/route change mid-checkout, two tabs, very long text in forms, emoji in names, 320 px and 1920 px viewports, keyboard-only checkout, reduced-motion on.
 
 ## Test Handoff
 
@@ -81,11 +81,11 @@ The client-side handoff is:
 - Quantity set to 0 removes the line.
 
 ### Environments and test data
-Local dev server (`npm run dev`, http://localhost:3000) and `npm run preview`. A Supabase test project (its URL and anon key in `.env.local`) with `supabase/schema.sql` applied; create two throwaway users to test isolation. Never test against a production project's real users, and never load-test Google Fonts, Unsplash or Supabase's shared infrastructure.
+Local dev server (`npm run dev`, http://localhost:3000) and the production build (`npm run build`, then `npm start`). A Supabase test project (its URL and anon key in `.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`) with `supabase/schema.sql` applied; create two throwaway users to test isolation. Never test against a production project's real users, and never load-test Google Fonts, Unsplash or Supabase's shared infrastructure.
 
 ## Load targets
 
-**Not applicable for now.** The site is static files on Vercel's CDN; the only server work is Supabase (managed, limits set by the project plan), and `place_order` is capped at 20 orders per user per hour. No capacity estimate was made. Performance is measured with Lighthouse on the built preview (PRD target: mobile performance ≥ 90, T-023). Load tests, if ever needed (for a deployed host), run only after the owner approves the exact target and window, never against production or third parties.
+**Not applicable for now.** Every current route is prerendered static HTML on Vercel's CDN; the only server work is Supabase (managed, limits set by the project plan), and `place_order` is capped at 20 orders per user per hour. No capacity estimate was made. Performance is measured with Lighthouse on the production build (`npm start`; PRD target: mobile performance ≥ 90, T-023). Load tests, if ever needed (for a deployed host), run only after the owner approves the exact target and window, never against production or third parties.
 
 ## Results
 
@@ -98,6 +98,8 @@ Latest run **2026-11-11** (after the Supabase and Vercel work; no browser or Sup
 | `npm run build` | pass; `dist/images` has the 5 product photos and no `/src/assets` string remains |
 | E2E, load, UI audit, security scan | not run yet |
 
+**2026-11-11, after the move to Next.js (D-014, branch `Move-to-Next.js`):** `npm run lint` pass (`strict: true`); `npx tsx --test src/utils/*.test.ts` 23 pass, 0 fail (the 18 above plus 5 in `routes.test.ts`); `npm run build` pass, 12 routes prerendered. Manual pass on `next dev` without Supabase env vars: every route loads with no console errors or hydration warnings, the header highlight follows the URL, `/shop?collectionType=new-in` filters, saved filters restore on a plain `/shop` reload, `/collections/bogus` is a 404 (HTTP 404), the bag survives route changes, checkout asks for sign-in and Esc closes the modal. Not run: the password-recovery link (needs a Supabase env), E2E, load, UI audit, security scan.
+
 Open bugs, found by reading the code and a scripted check, **not yet reproduced with a test**:
 
 | ID | Sev | Area | Title | Status |
@@ -108,7 +110,7 @@ Open bugs, found by reading the code and a scripted check, **not yet reproduced 
 | B-02 | S3 | Checkout | `step` never resets, reopening shows the old success screen | fixed in code 2026-11-11 (resets on open; submit locks); browser check pending |
 | B-05 | S3 | Data | `SNEAKERS[2]` assumed to be `jordan-4-retro` in two places | open, T-005 |
 | B-06 | S3 | Data | Hero slide price (Jordan 4: $189.99) differs from the catalogue ($199.99) | open, T-005 |
-| B-07 | S3 | Navigation | Footer social links are `#instagram`, `#tiktok`, ...; the router treats them as unknown routes and shows Home | open, T-007 |
+| B-07 | S3 | Navigation | Footer social links are `#instagram`, `#tiktok`, ...; they go nowhere (before D-014 the hash router treated them as unknown routes and showed Home) | open, T-007 |
 | B-08 | S3 | Tooling | Plain `npm install` fails with ERESOLVE (`esbuild ^0.25` vs Vite 8) | fixed 2026-11-11 (pin removed; plain `npm install` verified) |
 | B-10 | S3 | A11y | Muted text below 4.5:1 (`text-neutral-400` ×52, `text-neutral-500` ×44) | open, T-011 |
 | B-11 | S3 | A11y | No `role="dialog"`/`aria-modal`, no Esc handling, no `htmlFor` labels, no reduced-motion rule (0 matches each) | open, T-013 |

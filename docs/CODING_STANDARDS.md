@@ -1,19 +1,20 @@
 # Coding standards — KICKS.
 
-Match the surrounding code. There is no ESLint or Prettier config: `npm run lint` (`tsc --noEmit`, `tsconfig.json`) is the only automatic check. `strict` is **not** enabled in `tsconfig.json`; do not turn it on inside a feature task (separate task and owner OK).
+Match the surrounding code. There is no ESLint or Prettier config: `npm run lint` (`tsc --noEmit`, `tsconfig.json`) is the only automatic check. `strict` is set to `true` explicitly in `tsconfig.json`; keep it, because `next build` rewrites a missing value to `false`.
 
 ## Naming
 
-- Components and pages: `PascalCase` named exports, one per file, file name = component name (`ProductCard.tsx`). The code uses `export const X: React.FC<Props>` and `export default function App`.
-- Functions and variables: `camelCase`. Handlers in `App.tsx` are `handleX`; props that receive them are `onX`.
+- Components and pages: `PascalCase` named exports, one per file, file name = component name (`ProductCard.tsx`). Components use `export const X: React.FC<Props>`; Next.js route files (`page.tsx`, `layout.tsx`) must use `export default function`.
+- Functions and variables: `camelCase`. Handlers in `StoreProvider.tsx` are `handleX`; props that receive them are `onX`.
 - Constants: `UPPER_SNAKE_CASE` (`FREE_SHIPPING_THRESHOLD`, `STORAGE_KEY`). Types and interfaces: `PascalCase`, no `I` prefix.
 - Domain words follow the glossary in [CONTEXT.md](CONTEXT.md): code says `cart`, UI copy says "bag".
 - Test files: `<module>.test.ts` next to the module.
 
 ## File structure
 
-- `src/pages/` one screen per route; `src/components/` sections and overlays; `src/utils/` pure, tested logic; `src/data/` static data; `src/types/` shared types. See [ARCHITECTURE.md](ARCHITECTURE.md#folder-structure).
-- **Shared state goes in `App.tsx` and flows down as props** (D-004). No new state library or Context.
+- `src/app/` Next.js routes (one `page.tsx` per route); `src/screens/` one screen per route (never `src/pages/`: Next.js reads it as the Pages Router); `src/components/` sections and overlays; `src/utils/` pure, tested logic; `src/data/` static data; `src/types/` shared types. See [ARCHITECTURE.md](ARCHITECTURE.md#folder-structure).
+- **Shared state goes in `StoreProvider.tsx` and is read with `useStore()`** (D-004, amended by D-014). No state library; no second context or provider without the owner's OK.
+- Screens and `StoreProvider.tsx` start with `'use client'`, which makes everything they import client code. Browser-only access (`window`, `localStorage`) must not run at import time or during the first render: Next.js prerenders client components on the server too.
 - **Money maths only in `utils/cart.ts`** (D-010). Never compute totals, tax or discounts inside a component.
 - Imports use explicit `.ts`/`.tsx` extensions (`allowImportingTsExtensions`). The `@` alias is the **repo root**, not `src/`. Use `import type` for type-only imports in files the tests load.
 - Product images: import them or put them in `public/`; never new `/src/assets/...` strings (B-04).
@@ -34,7 +35,7 @@ Match the surrounding code. There is no ESLint or Prettier config: `npm run lint
 
 ## Comments
 
-Explain **why**, not what, in one line. A deliberate shortcut gets `shortcut: <limit>, <when to upgrade>`. Keep the existing `@license` header in `App.tsx`.
+Explain **why**, not what, in one line. A deliberate shortcut gets `shortcut: <limit>, <when to upgrade>`.
 
 ## Git and commits
 
