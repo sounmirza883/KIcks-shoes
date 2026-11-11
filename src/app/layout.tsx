@@ -25,7 +25,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           rel="stylesheet"
         />
       </head>
-      <body>
+      {/* Browser extensions (Grammarly etc.) add attributes to <body> before hydration; this only silences that one element. */}
+      <body suppressHydrationWarning>
         <StoreProvider>{children}</StoreProvider>
       </body>
     </html>

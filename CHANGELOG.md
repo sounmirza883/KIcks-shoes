@@ -7,6 +7,9 @@ All notable changes are listed here. Every finished task adds one line under Add
 ### Changed
 - Moved the storefront from Vite to Next.js 16 (App Router) on branch `Move-to-Next.js` (D-014): real routes (`/shop`, `/collections/[id]`, `/about`, `/contact`, `/account`) replace the `#hash` router, shared state moved from `App.tsx` into `StoreProvider`, screens moved from `src/pages/` to `src/screens/`, shop filters can come from the query string, and the Supabase env vars are now `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
+### Fixed
+- Hydration warning in dev caused by browser extensions (e.g. Grammarly) adding attributes to `<body>`: `suppressHydrationWarning` on `<body>` in `src/app/layout.tsx`.
+
 ### Removed
 - Vite, `vite.config.ts` (with its `DISABLE_HMR` toggles), `index.html`, `src/main.tsx`, `metadata.json` and the unused AI Studio packages (`@google/genai`, `express`, `dotenv`, `@types/express`) and `.env.example` entries (closes D-009).
 
